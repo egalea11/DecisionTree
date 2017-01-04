@@ -6,11 +6,19 @@ import java.io.FileInputStream;
 import java.io.InputStreamReader;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.List;
 
 /**
  * Created by Etienne G on 04/01/2017.
  */
 public class ID3 {
+
+    private List<AttributeNode> attributeNodes;
+
+
+    public ID3(){
+        this.attributeNodes = new ArrayList<AttributeNode>();
+    }
 
     public void readInputData(String filename) throws Exception {
         FileInputStream in = null;
@@ -19,6 +27,7 @@ public class ID3 {
             in = new FileInputStream(inputFile);
         } catch (Exception e) {
             System.err.println("Unable to open file: " + filename + "\n" + e);
+            System.exit(1);
         }
 
         // read file
@@ -28,36 +37,30 @@ public class ID3 {
 
         ArrayList<String> attributes = new ArrayList<>(Arrays.asList(attributeList.split(", ")));
 
-        for (String x : attributes){
-            System.out.println(x);
+        for (String attr : attributes){
+            System.out.println(attr);
+            createNewNode(attr);
         }
+
 
         int numberOfAttributes = attributes.size();
-        ArrayList<String>[] table = new ArrayList[numberOfAttributes];
+//        ArrayList<String>[] table = new ArrayList[numberOfAttributes];
 
-        while(true){
-            String[] nextLine = bin.readLine().split(", ");
+        // till EOF
+        String line;
+        while((line = bin.readLine()) != null){
+            String[] nextLine = line.split(", ");
             for(int i=0; i < numberOfAttributes; i++){
-                if(!table[i].contains(nextLine[i])){
-                    table[i].add(nextLine[i]);
-                    Attribute c = new Attribute(nextLine[i]);
-                }
-                else{
-
-                }
+                attributes.get(i).addLabel();
             }
         }
-
-
-
-
 
 
 //        StringTokenizer tokenizer = new StringTokenizer(input);
 //        numAttributes = tokenizer.countTokens();
 //        if (numAttributes <= 1) {
 //            System.err.println("Read line: " + input);
-//            System.err.println("Could not obtain the names of attributes in the line");
+//            System.err.println("Could not obtain the names of attributeNodes in the line");
 //            System.err.println("Expecting at least one input attribute and one output attribute");
 //            return 0;
 //        }
@@ -80,16 +83,23 @@ public class ID3 {
 //            if (numtokens != numAttributes) {
 //                System.err.println( "Read " + root.data.size() + " data");
 //                System.err.println( "Last line read: " + input);
-//                System.err.println( "Expecting " + numAttributes + " attributes");
+//                System.err.println( "Expecting " + numAttributes + " attributeNodes");
 //                return 0;
 //            }
 //            DataPoint point = new DataPoint(numAttributes);
 //            for (int i=0; i < numAttributes; i++) {
-//                point.attributes[i] = getSymbolValue(i, tokenizer.nextToken());
+//                point.attributeNodes[i] = getSymbolValue(i, tokenizer.nextToken());
 //            }
 //            root.data.addElement(point);
 //        }
-//        bin.close();
+        //bin.close();
+
+    }
+
+    private void createNewNode(String attrName) {
+        // add new attribute to attribute array-list
+        attributeNodes.add(new AttributeNode(attrName));
+
 
     }
 }
