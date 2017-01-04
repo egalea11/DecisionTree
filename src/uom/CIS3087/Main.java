@@ -1,4 +1,4 @@
-package algorithm;
+package uom.CIS3087;
 
 public class Main {
     public static void main(String[] args) throws Exception{
