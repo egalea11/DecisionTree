@@ -17,11 +17,12 @@ import java.util.*;
 public class ID3 {
 
     private List<AttributeNode> attributeNodes;
-    private List<String> trainingDataSet;
+    private ArrayList<String[]> trainingDataSet;
 
 
     public ID3() {
-        this.attributeNodes = new ArrayList<AttributeNode>();
+        this.attributeNodes = new ArrayList<>();
+        this.trainingDataSet = new ArrayList<>();
     }
 
     public void readInputData(String filename) throws Exception {
@@ -52,32 +53,33 @@ public class ID3 {
 
 
         String line;
-        ArrayList<String> trainingDataSet = new ArrayList<>();
         int lineCounter = 0;
         // till EOF
         while ((line = bin.readLine()) != null) {
             String[] trainingData = line.split(", ");
+            trainingDataSet.add(trainingData);
             lineCounter++;
             for (int i = 0; i < numberOfAttributes; i++) {
                 attributeNodes.get(i).addLabel(trainingData[i]);
                 System.out.println("label: " + trainingData[i]);
             }
-            trainingDataSet.add(line);
         }
-        this.trainingDataSet = trainingDataSet;
 
-
-        AttributeNode target = attributeNodes.get(4);
-
+        // calculating Entropy
         for (AttributeNode a : attributeNodes){
-//            calculateEntropy(a);
-            calculateEntropy(target, a);
+            calculateEntropy(a);
         }
+
+        // calculating Double Entropy
+        AttributeNode target = attributeNodes.get(4);
+        for (int i=0; i<trainingDataSet.size(); i++){
+            calculateDoubleEntropy(target, trainingDataSet.get(i));
+        }
+
+        // calculating Information Gain
 
         System.out.println("Complete");
     }
-
-
 
 
 
@@ -110,33 +112,22 @@ public class ID3 {
         return entropy;
     }
 
+
     // calculate entropy of two attributes
-    private double calculateEntropy(AttributeNode target, AttributeNode node) {
+    private double calculateDoubleEntropy(AttributeNode target, String[] record) {
         double entropy = 0;
         double totalVal = 0;
         int attrCount = 0;
 
         List<IntegerArray> targetEntropy = new ArrayList<IntegerArray>();
 
-        for(int i=0; i<trainingDataSet.size(); i++){
-            ArrayList<String> trainingData = new ArrayList<>(Arrays.asList(trainingDataSet.get(i).split(", ")));
+        for(String labels : attributeNodes){
 
         }
-
-
-        for(AttributeNode x : attributeNodes){
-//            if(x)
-        }
-
-
-
-        System.out.println("Double Entropy for " + node.attr + ": " + entropy);
 
         return entropy;
     }
 
-
-//
 //    public double calculateEntropy(List<String> target, List<String> attribute)
 //    {
 //        double entropy=0;
