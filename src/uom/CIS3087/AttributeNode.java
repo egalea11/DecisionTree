@@ -8,20 +8,22 @@ import java.util.ArrayList;
 
 public class AttributeNode {
 
-    public Double entropy;
+    public Double informationGain;
     public String attr;
     public ArrayList<String> data;
     public ArrayList<String> labels;
     public ArrayList<Integer> attrValues;
-    public AttributeNode parent;
-    public AttributeNode[] children;
+    public DecisionNode parent;
+    public ArrayList<DecisionNode> children;     // can have many parents
 
     public AttributeNode(String attr){
         this.attr = attr;
         this.data = new ArrayList<>();
         this.labels = new ArrayList<>();
         this.attrValues = new ArrayList<>();
+        this.children = new ArrayList<>();
     }
+
 
     public void addLabel(String label){
         int index = labels.indexOf(label);

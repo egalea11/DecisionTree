@@ -1,10 +1,5 @@
 package uom.CIS3087;
 
-import com.sun.org.apache.xalan.internal.xsltc.util.IntegerArray;
-import com.sun.xml.internal.fastinfoset.util.StringArray;
-import org.w3c.dom.Attr;
-
-import javax.management.Attribute;
 import java.io.BufferedReader;
 import java.io.File;
 import java.io.FileInputStream;
@@ -16,13 +11,12 @@ import java.util.*;
  */
 public class ID3 {
 
+    private AttributeNode root;
     private List<AttributeNode> attributeNodes;
-    private ArrayList<String[]> trainingDataSet;
 
 
     public ID3() {
         this.attributeNodes = new ArrayList<>();
-        this.trainingDataSet = new ArrayList<>();
     }
 
     public void readInputData(String filename) throws Exception {
@@ -62,23 +56,22 @@ public class ID3 {
             }
         }
 
-        AttributeNode target = attributeNodes.get(attributeNodes.size()-1);
         // calculating Entropy
-        for (AttributeNode a : attributeNodes){
-            calculateEntropy(a);
-        }
+//        for (AttributeNode a : attributeNodes){
+//            calculateEntropy(a);
+//        }
 
         // calculating Double Entropy
-        for (AttributeNode a : attributeNodes){
-            calculateDoubleEntropy(target, a);
-        }
+//        for (AttributeNode a : attributeNodes){
+//            calculateDoubleEntropy(target, a);
+//        }
 
         // calculating Information Gain
-        for (AttributeNode a : attributeNodes) {
-            System.out.println("Information Gain [" + a.attr + "]: " +calculateInformationGain(target, a));
-        }
+//        for (AttributeNode a : attributeNodes) {
+//            System.out.println("Information Gain [" + a.attr + "]: " +calculateInformationGain(target, a));
+//        }
 
-        System.out.println("Complete");
+//        System.out.println("Complete");
     }
 
 
@@ -108,7 +101,7 @@ public class ID3 {
             entropy += (-p*(log2));
         }
 
-//        System.out.println("Entropy for " + node.attr + ": " + entropy);
+        System.out.println("Entropy for " + node.attr + ": " + entropy);
 
         return entropy;
     }
@@ -135,7 +128,7 @@ public class ID3 {
             double sunny = node.attrValues.get(node.labels.indexOf(xLabel));
             double p = sunny/total;
             entropy += p * calculateEntropy(temp);
-//            System.out.println("Entropy for " + xLabel + " + entropy : " + entropy);
+            System.out.println("Entropy for " + xLabel + " + entropy : " + entropy);
         }
 
         return entropy;
@@ -144,6 +137,66 @@ public class ID3 {
 
     public double calculateInformationGain(AttributeNode target, AttributeNode node){
         return calculateEntropy(target) - calculateDoubleEntropy(target, node);
+    }
+
+    public AttributeNode findAttributeWithBestInformationGain(List<AttributeNode> nodes){
+        double bestIG = 0;
+        // PlayTennis
+        AttributeNode target = nodes.get(nodes.size()-1);
+        // Finding attribute with best information gain
+        for (int i=0; i < nodes.size()-1; i++) {
+            double gain = calculateInformationGain(target, nodes.get(i));
+            nodes.get(i).informationGain = gain;
+            if(gain > bestIG){
+                bestIG = gain;
+            }
+            System.out.println("Information Gain [" + nodes.get(i).attr + "]: " + gain);
+        }
+
+        AttributeNode bestNode = null;
+        for (int i=0; i < nodes.size()-1; i++) {
+            if (bestIG == nodes.get(i).informationGain) {
+                bestNode = nodes.get(i);
+            }
+        }
+
+        return bestNode;
+    }
+
+    public void buildDecisionTree(){
+
+        List<AttributeNode> testDataNodes = attributeNodes;
+
+        // Finds the Attribute with the best information gain from the training data provided
+        AttributeNode bestNode = findAttributeWithBestInformationGain(testDataNodes);
+        System.out.println("BestNode: " + bestNode.attr);
+        testDataNodes.remove(bestNode);
+
+        root = createDecisionNodes(bestNode);
+
+        buildSubTree(testDataNodes, root.children.get(1));
+    }
+
+    // creates DecisionNodes from labels
+    private AttributeNode createDecisionNodes(AttributeNode attrNode) {
+        for(String label : attrNode.labels){
+            attrNode.children.add(new DecisionNode(label, attrNode));
+        }
+        return attrNode;
+    }
+
+    public void buildSubTree(List<AttributeNode> nodes, DecisionNode parent){
+
+        List<AttributeNode> testDataNodes = nodes;
+
+        // Finds the Attribute with the best information gain from the training data provided
+        AttributeNode bestNode = findAttributeWithBestInformationGain(testDataNodes);
+        System.out.println("BestNode: " + bestNode.attr);
+        testDataNodes.remove(bestNode);
+
+        parent.child = bestNode;
+
+
     }
 
 

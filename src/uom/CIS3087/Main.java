@@ -5,7 +5,7 @@ public class Main {
 
         // run decision tree
         ID3 tree = new ID3();
-        tree.readInputData("C:\\DTreeInput.txt");
-
+        tree.readInputData("C:\\example.txt");
+        tree.buildDecisionTree();
     }
 }
