@@ -47,36 +47,36 @@ public class ID3 {
             createNewNode(attr);
         }
 
-
         int numberOfAttributes = attributeList.size();
-//        ArrayList<String>[] table = new ArrayList[numberOfAttributes];
 
 
         String line;
-        int lineCounter = 0;
         // till EOF
         while ((line = bin.readLine()) != null) {
             String[] trainingData = line.split(", ");
-            trainingDataSet.add(trainingData);
-            lineCounter++;
+//            trainingDataSet.add(trainingData);
             for (int i = 0; i < numberOfAttributes; i++) {
                 attributeNodes.get(i).addLabel(trainingData[i]);
-                System.out.println("label: " + trainingData[i]);
+                attributeNodes.get(i).data.add(trainingData[i]);
+//                System.out.println("label: " + trainingData[i]);
             }
         }
 
+        AttributeNode target = attributeNodes.get(attributeNodes.size()-1);
         // calculating Entropy
         for (AttributeNode a : attributeNodes){
             calculateEntropy(a);
         }
 
         // calculating Double Entropy
-        AttributeNode target = attributeNodes.get(4);
-        for (int i=0; i<trainingDataSet.size(); i++){
-            calculateDoubleEntropy(target, trainingDataSet.get(i));
+        for (AttributeNode a : attributeNodes){
+            calculateDoubleEntropy(target, a);
         }
 
         // calculating Information Gain
+        for (AttributeNode a : attributeNodes) {
+            System.out.println("Information Gain [" + a.attr + "]: " +calculateInformationGain(target, a));
+        }
 
         System.out.println("Complete");
     }
@@ -84,75 +84,68 @@ public class ID3 {
 
 
     // add new attribute to attribute array-list
-    private void createNewNode(String attrName) {
+    public void createNewNode(String attrName) {
         attributeNodes.add(new AttributeNode(attrName));
     }
 
 
     // calculate entropy of attribute node
-    private double calculateEntropy(AttributeNode node){
+    public double calculateEntropy(AttributeNode node){
         double entropy = 0;
-        double totalVal = 0;
-        int attrCount = 0;
+        double total = node.data.size();
 
-        for (int k : node.attrValues){
-            totalVal += k;
-            attrCount++;
-        }
-
-        double p = 0;
-        for (int i=0; i < attrCount; i++){
-            p = (node.attrValues.get(i)/totalVal);
+        // loop for all labels in attribute
+        for(String label : node.labels){
+            double count = 0;
+            // loop for every record in data
+            for(String x : node.data) {
+                if (x.equals(label)) {
+                    count++;
+                }
+            }
+            double p = (count/total);
             double log2 = (Math.log10(p)/Math.log10(2));
-            entropy += -(p*(log2));
+            entropy += (-p*(log2));
         }
 
-        System.out.println("Entropy for " + node.attr + ": " + entropy);
+//        System.out.println("Entropy for " + node.attr + ": " + entropy);
 
         return entropy;
     }
 
 
     // calculate entropy of two attributes
-    private double calculateDoubleEntropy(AttributeNode target, String[] record) {
+    public double calculateDoubleEntropy(AttributeNode target, AttributeNode node) {
         double entropy = 0;
-        double totalVal = 0;
-        int attrCount = 0;
+        double total = node.data.size();
 
-        List<IntegerArray> targetEntropy = new ArrayList<IntegerArray>();
-
-        for(String labels : attributeNodes){
-
+        // loop for all labels in attribute
+        for(String xLabel : node.labels){
+            AttributeNode temp = new AttributeNode("temp");
+            for(String targetLabel : target.labels){
+                double count = 0;
+                for(int i=0; i<node.data.size(); i++){
+                    if(node.data.get(i).equals(xLabel) && target.data.get(i).equals(targetLabel)){
+                        count++;
+                        temp.addLabel(targetLabel);
+                        temp.data.add(targetLabel);
+                    }
+                }
+            }
+            double sunny = node.attrValues.get(node.labels.indexOf(xLabel));
+            double p = sunny/total;
+            entropy += p * calculateEntropy(temp);
+//            System.out.println("Entropy for " + xLabel + " + entropy : " + entropy);
         }
 
         return entropy;
     }
 
-//    public double calculateEntropy(List<String> target, List<String> attribute)
-//    {
-//        double entropy=0;
-//        //this line creates a set which only contains the unique values of the ArrayList
-//        //this is then used to calculate the probability
-//        Set<String> uniqueAttributeValues = new HashSet<String>(attribute);
-//
-//        for (String uniqueAttributeValue : uniqueAttributeValues)
-//        {
-//            List<String> targetDataForEntropy = new ArrayList<String>();
-//            double count=0;
-//            for (int i=0;i<attribute.size();i++)
-//            {
-//                if (attribute.get(i).equals(uniqueAttributeValue))
-//                {
-//                    count++;
-//                    targetDataForEntropy.add(target.get(i));
-//                }
-//            }
-//            double prob = count/attribute.size();
-//            entropy += prob * calculateEntropy(targetDataForEntropy);
-//        }
-//
-//        return entropy;
-//    }
+
+    public double calculateInformationGain(AttributeNode target, AttributeNode node){
+        return calculateEntropy(target) - calculateDoubleEntropy(target, node);
+    }
+
 
 }
 
