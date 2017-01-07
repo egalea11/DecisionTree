@@ -6,54 +6,54 @@ import java.io.FileInputStream;
 import java.io.InputStreamReader;
 import java.util.*;
 
-/**
- * Created by Etienne G on 04/01/2017.
- */
 
 public class ID3 {
 
+    // maximum lines training data set
     public int trainingDataLines = 14;
 
     private AttributeNode root;
     private List<AttributeNode> attributeNodes;
-    private ArrayList<String[]> trainingDataSet;
 
-
+    // ID3 constructor
     public ID3() {
         this.attributeNodes = new ArrayList<>();
-        this.trainingDataSet = new ArrayList<>();
     }
 
+    // read file function
     public void readInputData(String filename) throws Exception {
+        // create a new file input stream from the path specified (filename)
         FileInputStream in = null;
         try {
             File inputFile = new File(filename);
             in = new FileInputStream(inputFile);
         } catch (Exception e) {
+            // if the file is unable to be open, exit
             System.err.println("Unable to open file: " + filename + "\n" + e);
             System.exit(1);
         }
 
         // read file
         BufferedReader bin = new BufferedReader(new InputStreamReader(in));
+        // stores first line into a string
         String attributeString = bin.readLine();
-
+        // Split the string into an array list, separated by a comma
         ArrayList<String> attributeList = new ArrayList<>(Arrays.asList(attributeString.split(", ")));
 
+        // for each attribute found in the first line of the file, create a new attribute node
         for (String attr : attributeList) {
-//            System.out.println(attr);
             createNewNode(attr);
         }
 
-        int numberOfAttributes = attributeList.size();
-
         String line;
-        // till EOF
+        // loop till EOF
         while ((line = bin.readLine()) != null) {
             String[] trainingData = line.split(", ");
-            trainingDataSet.add(trainingData);
-            for (int i = 0; i < numberOfAttributes; i++) {
+            // for each line
+            for (int i = 0; i < attributeList.size(); i++) {
+                // add new label to the respective attribute
                 attributeNodes.get(i).addLabel(trainingData[i]);
+                // add new label to an array list in the attribute (log)
                 attributeNodes.get(i).data.add(trainingData[i]);
             }
         }
@@ -80,12 +80,12 @@ public class ID3 {
                 }
             }
             double p = (count/total);
+            // change log base from log10 to log22
             double log2 = (Math.log10(p)/Math.log10(2));
-            entropy += (-p*(log2));
+            // adds entropy
+            entropy -= (p*(log2));
         }
-
-        System.out.println("Entropy for " + node.attr + ": " + entropy);
-
+//        System.out.println("Entropy for " + node.attr + ": " + entropy);
         return entropy;
     }
 
@@ -108,27 +108,30 @@ public class ID3 {
                     }
                 }
             }
+            // adds the total of same labels found in the node
             int labelTotal = 0;
             for (String label : node.data)
                 if(label.equals(xLabel))
                     labelTotal++;
-
+            // calculate probability
             double p = labelTotal/total;
             entropy += p * calculateEntropy(temp);
-            System.out.println("Entropy for " + xLabel + " + entropy : " + entropy);
+            System.out.println("Entropy for '" + xLabel + "' + 'play tennis' : " + entropy);
         }
-
         return entropy;
     }
 
 
     public double calculateInformationGain(AttributeNode target, AttributeNode node){
+        System.out.println();
+
         return calculateEntropy(target) - calculateDoubleEntropy(target, node);
     }
 
+    // Calculates information gain on all attributes
     public AttributeNode findAttributeWithBestInformationGain(List<AttributeNode> nodes){
         double bestIG = 0;
-        // PlayTennis
+        // target = PlayTennis
         AttributeNode target = nodes.get(nodes.size()-1);
         // Finding attribute with best information gain
         for (int i=0; i < nodes.size()-1; i++) {
@@ -137,7 +140,7 @@ public class ID3 {
             if(gain > bestIG){
                 bestIG = gain;
             }
-            System.out.println("Information Gain [" + nodes.get(i).attr + "]: " + gain);
+            System.out.println(":: Information Gain [" + nodes.get(i).attr + "]: " + gain);
         }
 
         AttributeNode bestNode = null;
@@ -146,21 +149,17 @@ public class ID3 {
                 bestNode = nodes.get(i);
             }
         }
-
+        System.out.println("\nBest Attribute: " + bestNode.attr);
         return bestNode;
     }
 
     // first run
     public void buildDecisionTree(){
-
-        List<AttributeNode> nodes = attributeNodes;
-
+        // make a copy of the attribute node list
+        List<AttributeNode> nodes = new ArrayList<>(attributeNodes);
         // Finds the Attribute with the best information gain from the training data provided
         AttributeNode bestNode = findAttributeWithBestInformationGain(nodes);
-        System.out.println("BestNode: " + bestNode.attr);
-
         root = createDecisionNodes(nodes, bestNode);
-
         // call recursive method
         buildTree(nodes, root.children.get(1));
     }
@@ -168,50 +167,37 @@ public class ID3 {
     public void buildTree(List<AttributeNode> nodes, DecisionNode parent){
         // Finds the Attribute with the best information gain from the training data provided
         AttributeNode bestNode = findAttributeWithBestInformationGain(nodes);
-        System.out.println("BestNode: " + bestNode.attr);
-
         parent.child = bestNode;
-
-
     }
 
     // creates DecisionNodes from labels
     private AttributeNode createDecisionNodes(List<AttributeNode>nodes, AttributeNode aNode) {
         for(String label : aNode.labels){
-            DecisionNode dNode = new DecisionNode(label, aNode);
-            dNode = createSubDecisionTree(nodes, dNode);    // prune table
-            aNode.children.add(dNode);
+            // Creating a new subtree per new DecisionNode and adding them to the parent attribute node
+            aNode.children.add(createSubDecisionTree(nodes, new DecisionNode(label, aNode)));
         }
         return aNode;
     }
 
     public DecisionNode createSubDecisionTree(List<AttributeNode> nodes, DecisionNode dNode){
-        List<AttributeNode> tempNodes = nodes;
-
+        List<AttributeNode> tempNodes = new ArrayList<>(nodes);
         int attributeIndex = nodes.indexOf(dNode.parent);
-
         // pruning table
-        // for all attributes... (14)
+        // for all records... (14)
         for (int i=trainingDataLines-1; i>0; i--){
             // if decisionNode label does not match with attribute's label, remove all record
             if(!dNode.label.equals(tempNodes.get(attributeIndex).data.get(i))){
                 // remove record which does not match label
-                for(int k=0; k<attributeNodes.size(); k++){
+                for(int k=0; k<nodes.size(); k++){
                     tempNodes.get(k).data.remove(i);
                 }
             }
         }
-
         // remove attribute
         tempNodes.remove(attributeIndex);
-
         // calculate entropy & put node with best Information gain as child
         AttributeNode bestNode = findAttributeWithBestInformationGain(tempNodes);
-
         dNode.child = bestNode;
-        dNode.child.parent = dNode; // might not be necessary
-
-
 
         return dNode;
     }
